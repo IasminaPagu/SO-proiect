@@ -10,7 +10,7 @@ int main(){
     dir = opendir(".");
     if(dir==NULL){
         printf("Error\n");
-        return 1;
+        return(1);
     }
     while((entry=readdir(dir))!=NULL){
         if(entry->d_type == DT_REG){
