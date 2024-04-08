@@ -1,26 +1,7 @@
-DIR dir1 : 
-Dimeniune 552 bytes, 
-Last access time (null)
-  dir1/dir1_f1.txt Regular file, 
-Dimeniune 32 bytes, 
-Last access time Tue Apr  2 20:32:08 2024
-
-  dir1/dir1_f2.txt Regular file, 
-Dimeniune 32 bytes, 
-Last access time Tue Apr  2 20:32:24 2024
-
-  dir1/fis1.txt Regular file, 
-Dimeniune 32 bytes, 
-Last access time Tue Apr  2 21:09:04 2024
-
-  dir1/dir1_1 Director file, 
-Dimeniune 32 bytes, 
-Last access time Tue Apr  2 21:10:52 2024
-  DIR dir1/dir1_1 : 
-Dimeniune 140723885634560 bytes, 
-Last access time Sat Nov  2 03:57:52 4446278
-
-    dir1/dir1_1/fis1.txt Regular file, 
-Dimeniune 32 bytes, 
-Last access time Tue Apr  2 21:09:48 2024
-
+DIR dir1	: Dimensiune 4096 bytes , inode number 1452239
+FILE dir1/file1.txt	: Dimensiune 0 bytes ,  inode number 1452251
+FILE dir1/file2.txt	: Dimensiune 0 bytes ,  inode number 1452253
+      DIR dir1/dir2	: Dimensiune 4096 bytes , inode number 1452254
+      FILE dir1/dir2/file1.txt	: Dimensiune 7 bytes ,  inode number 1452503
+      FILE dir1/dir2/file1.txt~	: Dimensiune 0 bytes ,  inode number 1452257
+      FILE dir1/dir2/file2.txt	: Dimensiune 0 bytes ,  inode number 1452282
