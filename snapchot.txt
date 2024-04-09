@@ -1,7 +1,7 @@
-DIR dir1	: Dimensiune 4096 bytes , inode number 1452239
-FILE dir1/file1.txt	: Dimensiune 0 bytes ,  inode number 1452251
-FILE dir1/file2.txt	: Dimensiune 0 bytes ,  inode number 1452253
-      DIR dir1/dir2	: Dimensiune 4096 bytes , inode number 1452254
-      FILE dir1/dir2/file1.txt	: Dimensiune 7 bytes ,  inode number 1452503
-      FILE dir1/dir2/file1.txt~	: Dimensiune 0 bytes ,  inode number 1452257
-      FILE dir1/dir2/file2.txt	: Dimensiune 0 bytes ,  inode number 1452282
+DIR dir2	: Dimensiune 4096 bytes , inode number 1452247 , Time of last modification -136635616
+      DIR dir2/dir3	: Dimensiune 4096 bytes , inode number 1452493 , Time of last modification -136635616
+      FILE dir2/dir3/f2.txt	: Dimensiune 0 bytes ,  inode number 1452495 , Time of last modification -136635616
+      FILE dir2/dir3/f1.txt	: Dimensiune 0 bytes ,  inode number 1452494 , Time of last modification -136635616
+FILE dir2/f2.txt	: Dimensiune 0 bytes ,  inode number 1452490 , Time of last modification -136635616
+FILE dir2/f1.txt	: Dimensiune 0 bytes ,  inode number 1452419 , Time of last modification -136635616
+FILE dir2/f3.txt	: Dimensiune 0 bytes ,  inode number 1452496 , Time of last modification -136635616
