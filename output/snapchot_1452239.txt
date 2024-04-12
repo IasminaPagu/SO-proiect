@@ -1,0 +1,14 @@
+ DIR dir1	: Dimensiune 4096 bytes , inode number 1452239 , Time of last modification Mon Apr  8 15:18:07 2024
+
+ FILE dir1/file1.txt	: Dimensiune 0 bytes ,  inode number 1452251 , Time of last modification Mon Apr  8 15:17:52 2024
+
+ FILE dir1/file2.txt	: Dimensiune 0 bytes ,  inode number 1452253 , Time of last modification Mon Apr  8 15:17:57 2024
+
+       DIR dir1/dir2	: Dimensiune 4096 bytes , inode number 1452254 , Time of last modification Mon Apr  8 15:20:22 2024
+
+       FILE dir1/dir2/file1.txt	: Dimensiune 7 bytes ,  inode number 1452503 , Time of last modification Mon Apr  8 15:20:22 2024
+
+       FILE dir1/dir2/file1.txt~	: Dimensiune 0 bytes ,  inode number 1452257 , Time of last modification Mon Apr  8 15:18:32 2024
+
+       FILE dir1/dir2/file2.txt	: Dimensiune 0 bytes ,  inode number 1452282 , Time of last modification Mon Apr  8 15:18:38 2024
+
