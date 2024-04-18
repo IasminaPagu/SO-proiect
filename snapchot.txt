@@ -1,8 +1,0 @@
-DIR dir2	: Dimensiune 4096 bytes , inode number 1452247
-FILE dir2/fis_lab.txt	: Dimensiune 0 bytes ,  inode number 1452597
-      DIR dir2/dir3	: Dimensiune 4096 bytes , inode number 1452493
-      FILE dir2/dir3/f2.txt	: Dimensiune 0 bytes ,  inode number 1452495
-      FILE dir2/dir3/f1.txt	: Dimensiune 0 bytes ,  inode number 1452494
-FILE dir2/f2.txt	: Dimensiune 0 bytes ,  inode number 1452490
-FILE dir2/f1.txt	: Dimensiune 0 bytes ,  inode number 1452419
-FILE dir2/f3.txt	: Dimensiune 0 bytes ,  inode number 1452496
