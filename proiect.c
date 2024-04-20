@@ -159,16 +159,20 @@ void parcurgere_director(char *nume_director, int nivel, int *inode_number, int 
 
 int main(int argc, char *argv[]){
 
-    if(argc > 13){
-        printf("Nu ati transmis numarul potrivit de argumente in linia de comanda\n");
-        exit(EXIT_FAILURE);
-    }
     char cale_director[256]="";
     char snapchot_name[100];
 
     int inode_number = 0;
     char buffer_auxiliar[BUFFER_SIZE];//este buffer-ul in care imi stochez parcurgerea_directorului
 
+    pid_t pid ,wpid;
+    int status;
+
+    if(argc > 13){
+        printf("Nu ati transmis numarul potrivit de argumente in linia de comanda\n");
+        exit(EXIT_FAILURE);
+    }
+    
     for(int i = 3 ; i < argc ; i++){
 
         inode_number = 0;
@@ -183,29 +187,46 @@ int main(int argc, char *argv[]){
 
         //am adaugat asta, deoarece cu abordarea trecuta, nu inteleg de ce
         //pentru acelasi fisier primeam 2 fd diferite 4 si 5
+        pid = fork();
+        if (pid == -1){
+            printf("eroare fork\n");
+            exit(1);
+        }
+        if(pid == 0){//cod fiu
+            if(verificare_exista_snapchot_anterior(argv[2],snapchot_name) == 0){//inseamna ca noul snapchot nu exista in directorul de output
+                //si atunci il creez
+                scriere_snapchot(cale_director,buffer_auxiliar);
+                printf("nu exista inainte de acest apel\n");
+            }else{
+                //compar ce exista deja in snapchot_name cu buffer_auxiliar pe care l am obtinut prin apelarea functiei parcurgere_director(...)
+                if( (comparare_snapchot_anterior(cale_director,buffer_auxiliar) == 0) ){//inseamna ca nu s-a facut nicio modificare in snapchot
+                    printf("nu s a produs nicio modificare fata de snapchotul anterior\n");
+                    continue;
+                }
+                else{
+                    scriere_snapchot(cale_director, buffer_auxiliar);
+                    printf("a existat o modificare\n");
+                }
+                printf("exista deja \n");
+            }
+            exit(0);
+        }
 
-        if(verificare_exista_snapchot_anterior(argv[2],snapchot_name) == 0){//inseamna ca noul snapchot nu exista in directorul de output
-            //si atunci il creez
-            scriere_snapchot(cale_director,buffer_auxiliar);
-            printf("nu exista inainte de acest apel\n");
-        }else{
-            //compar ce exista deja in snapchot_name cu buffer_auxiliar pe care l am obtinut prin apelarea functiei parcurgere_director(...)
-            if( (comparare_snapchot_anterior(cale_director,buffer_auxiliar) == 0) ){//inseamna ca nu s-a facut nicio modificare in snapchot
-                printf("nu s a produs nicio modificare fata de snapchotul anterior\n");
-                continue;
+        //proces parinte
+        for(int i = 3 ; i < argc ; i++){
+            wpid = wait(&status);
+            if(WIFEXITED(status)){
+                printf("\nChild %d ended with code %d cu numele %s\n\n", getpid(), WEXITSTATUS(status),snapchot_name);
+            }else{
+                printf("\nChild %d ended abnormally\n", getpid());
             }
-            else{
-                scriere_snapchot(cale_director, buffer_auxiliar);
-                printf("a existat o modificare\n");
-            }
-            printf("exista deja \n");
         }
     }
 
     /*  IDEEA de lucru pt astazi este urmatoarea : 
-    E1) parcurg directorul de output snapchot cu snapchot
+    E1) parcurg directorul de output snapchot cu snapchot                                                       DONE 
     daca NU gasesc un snapchot cu numele identic 
-         imi creez snapchotul folosind functia scriere_snapchot(...)                                            DONE
+         imi creez snapchotul folosind functia scriere_snapchot(...)                                            
                     altfel
          fac verificare de continut intre buffer_auxiliar si continutul snaphotului anterior   
     */
