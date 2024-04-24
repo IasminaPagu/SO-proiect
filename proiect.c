@@ -201,7 +201,7 @@ int main(int argc, char *argv[]){
                 //compar ce exista deja in snapchot_name cu buffer_auxiliar pe care l am obtinut prin apelarea functiei parcurgere_director(...)
                 if( (comparare_snapchot_anterior(cale_director,buffer_auxiliar) == 0) ){//inseamna ca nu s-a facut nicio modificare in snapchot
                     printf("nu s a produs nicio modificare fata de snapchotul anterior\n");
-                    continue;
+                    //continue;
                 }
                 else{
                     scriere_snapchot(cale_director, buffer_auxiliar);
@@ -211,17 +211,40 @@ int main(int argc, char *argv[]){
             }
             exit(0);
         }
+    }
 
-        //proces parinte
-        for(int i = 3 ; i < argc ; i++){
-            wpid = wait(&status);
+    //proces parinte
+    for(int i = 3 ; i < argc ; i++){
+        wpid = wait(&status);
+        if (wpid == -1) {
+                perror("waitpid");
+                exit(EXIT_FAILURE);
+        }
+        if(WIFEXITED(status)){
+        printf("Child %d ended with code %d cu numele %s\n",wpid, WEXITSTATUS(status),snapchot_name);
+        }
+        else{
+            printf("Child %d ended abnormally\n", wpid);
+        }
+
+    }
+    /*
+    afisarea din enunt trb sa fie 
+    printf("Procesul cu PID %d s-a incheiat cu codul %d",wpid,WEXITSTATUS(status));
+    */
+        return 0;
+
+}
+            /*
+     printf("\nChild ended with code %d\n", WEXITSTATUS(status));
+  else
+     printf("\nChild ended abnormally\n");
             if(WIFEXITED(status)){
                 printf("\nChild %d ended with code %d cu numele %s\n\n", getpid(), WEXITSTATUS(status),snapchot_name);
             }else{
                 printf("\nChild %d ended abnormally\n", getpid());
             }
-        }
-    }
+            */
 
     /*  IDEEA de lucru pt astazi este urmatoarea : 
     E1) parcurg directorul de output snapchot cu snapchot                                                       DONE 
@@ -231,12 +254,9 @@ int main(int argc, char *argv[]){
          fac verificare de continut intre buffer_auxiliar si continutul snaphotului anterior   
     */
 
-    return 0;
-
-}
     /*
     pid_t pid;
-    int status;
+    int status;_
     for(int i = 3 ; i < argc ; i++){
         inode_number = 0;
         strcpy(buffer_auxiliar,"");

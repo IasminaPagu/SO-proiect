@@ -1,0 +1,8 @@
+ DIR dir15	: Dimensiune 4096 bytes , inode number 1452500 , Time of last modification Sat Apr 20 16:03:10 2024
+
+ FILE dir15/file1.txt	: Dimensiune 0 bytes ,  inode number 1446545 , Time of last modification Thu Apr 18 15:27:43 2024
+
+ FILE dir15/file2.txt	: Dimensiune 0 bytes ,  inode number 1450312 , Time of last modification Thu Apr 18 15:31:32 2024
+
+ FILE dir15/file3.txt	: Dimensiune 0 bytes ,  inode number 1452440 , Time of last modification Sat Apr 20 16:03:10 2024
+
