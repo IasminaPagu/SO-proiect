@@ -147,7 +147,13 @@ void parcurgere_director(char *nume_director, int nivel, int *inode_number, int 
             snprintf(buffer,sizeof(buffer)," %sLINK  %s\t: Dimensiune %ld bytes ,  inode number %ld , Time of last modification %s\n",spatii,cale_relativa,info.st_size, info.st_ino,ctime(&info.st_mtime));
             strcat(buffer_auxiliar,buffer);
         }
-        else if(S_ISREG(info.st_mode)){
+        else if(S_ISREG(info.st_mode)){ 
+            
+            /*
+          if(info.st_mode & S_IRWXU){
+                printf(" \n intru aici pentru drept de owner\n");
+            } 
+            */
             snprintf(buffer,sizeof(buffer),"%s FILE %s\t: Dimensiune %ld bytes ,  inode number %ld , Time of last modification %s\n",spatii,cale_relativa,info.st_size, info.st_ino,ctime(&info.st_mtime));
             strcat(buffer_auxiliar,buffer);
         }
@@ -156,11 +162,44 @@ void parcurgere_director(char *nume_director, int nivel, int *inode_number, int 
     
 
 }
+int verificare_director_argument_in_linia_de_comanda(char *nume_argument){
+    //returneaza 1 daca argumentul dat ca si argument functiei este director
+    //altfel returneaza 0
+    struct stat info;
+    int valoare_lstat;
+
+    valoare_lstat = lstat(nume_argument,&info);
+    if(valoare_lstat == -1){
+        perror("Nu s-au putut afla atributele fisierului\n");
+        exit(errno);
+    }
+    if( S_ISDIR(info.st_mode)){
+        return 1;
+    }
+    else{
+        return 0;
+        }
+}
 
 int main(int argc, char *argv[]){
 
     char cale_director[256]="";
     char snapchot_name[100];
+    /*
+    trb sa verific ca argumentul din linia de comanda este director
+
+    cand lansez in executie cu exec , eu nu am drepturi asupra fisierului meu
+    deci in script prima oara ii dau drepturi
+
+    trb sa mut in codul meu din C fisierul din directorul transmis ca parametru in linia de comanda,
+    in directorul de fisiere_malitioase
+    cu rename
+    si dupa il sterg din directorul meu cu remove
+
+    inf circula prin pipe nepot-fiu
+    inf circula prin cod de return fiu-parinte
+
+    */
 
     int inode_number = 0;
     char buffer_auxiliar[BUFFER_SIZE];//este buffer-ul in care imi stochez parcurgerea_directorului
@@ -177,61 +216,66 @@ int main(int argc, char *argv[]){
 
         inode_number = 0;
         strcpy(buffer_auxiliar,"");
-        parcurgere_director(argv[i],0, &inode_number, 0,buffer_auxiliar);
-
-        sprintf(snapchot_name, "snapchot_%d.txt",inode_number);
-
-        strcpy(cale_director, argv[2]);
-        strcat(cale_director, "/");
-        strcat(cale_director,snapchot_name);
-
-        //am adaugat asta, deoarece cu abordarea trecuta, nu inteleg de ce
-        //pentru acelasi fisier primeam 2 fd diferite 4 si 5
-        pid = fork();
-        if (pid == -1){
-            printf("eroare fork\n");
-            exit(1);
-        }
-        if(pid == 0){//cod fiu
-            if(verificare_exista_snapchot_anterior(argv[2],snapchot_name) == 0){//inseamna ca noul snapchot nu exista in directorul de output
-                //si atunci il creez
-                scriere_snapchot(cale_director,buffer_auxiliar);
-                printf("nu exista inainte de acest apel\n");
-            }else{
-                //compar ce exista deja in snapchot_name cu buffer_auxiliar pe care l am obtinut prin apelarea functiei parcurgere_director(...)
-                if( (comparare_snapchot_anterior(cale_director,buffer_auxiliar) == 0) ){//inseamna ca nu s-a facut nicio modificare in snapchot
-                    printf("nu s a produs nicio modificare fata de snapchotul anterior\n");
-                    //continue;
-                }
-                else{
-                    scriere_snapchot(cale_director, buffer_auxiliar);
-                    printf("a existat o modificare\n");
-                }
-                printf("exista deja \n");
+        //verific daca argumentul este director, daca nu, trec peste
+        if(verificare_director_argument_in_linia_de_comanda(argv[i]) == 1){//inseamna ca argumentul in linie de comanda este director
+            pid = fork();
+            if (pid == -1){
+                printf("eroare fork\n");
+                exit(1);
             }
-            exit(0);
+            if(pid == 0){//cod fiu
+                parcurgere_director(argv[i],0, &inode_number, 0,buffer_auxiliar);
+
+                sprintf(snapchot_name, "snapchot_%d.txt",inode_number);
+                strcpy(cale_director, argv[2]);
+                strcat(cale_director, "/");
+                strcat(cale_director,snapchot_name);
+                
+                if(verificare_exista_snapchot_anterior(argv[2],snapchot_name) == 0){//inseamna ca noul snapchot nu exista in directorul de output
+                    //si atunci il creez
+                    scriere_snapchot(cale_director,buffer_auxiliar);
+                    printf("nu exista inainte de acest apel\n");
+                }else{
+                    //compar ce exista deja in snapchot_name cu buffer_auxiliar pe care l am obtinut prin apelarea functiei parcurgere_director(...)
+                    if( (comparare_snapchot_anterior(cale_director,buffer_auxiliar) == 0) ){//inseamna ca nu s-a facut nicio modificare in snapchot
+                        printf("nu s a produs nicio modificare fata de snapchotul anterior\n");
+                        //continue;
+                    }
+                    else{
+                        scriere_snapchot(cale_director, buffer_auxiliar);
+                        printf("a existat o modificare\n");
+                    }
+                    printf("exista deja \n");
+                }
+                exit(0);
+            }
+        }
+        else{
+            printf("\nargumentul %s nu este un director !!\n",argv[i]);
+            continue;
         }
     }
 
     //proces parinte
     for(int i = 3 ; i < argc ; i++){
-        wpid = wait(&status);
-        if (wpid == -1) {
-                perror("waitpid");
-                exit(EXIT_FAILURE);
-        }
-        if(WIFEXITED(status)){
-        printf("Child %d ended with code %d cu numele %s\n",wpid, WEXITSTATUS(status),snapchot_name);
-        }
-        else{
-            printf("Child %d ended abnormally\n", wpid);
-        }
+        if(verificare_director_argument_in_linia_de_comanda(argv[i]) == 1){
+            //doar daca argumentul este un director se creeaza un proces pentru el
+            //daca nu puneam aceasta conditie aparea mesajul : "waitpid: No child processes "
+            //dar facea totul corect in rest
+            wpid = wait(&status);
+            if (wpid == -1) {
+                    perror("waitpid");
+                    exit(EXIT_FAILURE);
+            }
+            if(WIFEXITED(status)){
+            printf("Procesul cu PID %d s-a incheiat cu codul %d\n",wpid,WEXITSTATUS(status));//WEXITSTATUS ne da codul de retur, gen exit(0)
+            }
+            else{
+                printf("Child %d ended abnormally\n", wpid);
+            }
+            }
 
     }
-    /*
-    afisarea din enunt trb sa fie 
-    printf("Procesul cu PID %d s-a incheiat cu codul %d",wpid,WEXITSTATUS(status));
-    */
         return 0;
 
 }
@@ -319,6 +363,14 @@ int main(int argc, char *argv[]){
     //E2)compar continutul cu strcmp()
     //strcmp(snaphot_anterior,buffer) == 0 => nu modific
     //strcmp(snapchot_anterior,buffer) !=0 => scriere_snapchot
+
+
+    //E1) trb sa verific daca fisierul are toate drepturile de access lipsa
+    //gen chmod 000
+    //E2) trb sa mi fac un script in care sa verific chestiile alea pe continutul fisierului meu
+
+
+
 
 
     //chestii de finete

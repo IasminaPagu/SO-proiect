@@ -1,6 +1,8 @@
- DIR dir1	: Dimensiune 4096 bytes , inode number 1452239 , Time of last modification Mon Apr  8 15:18:07 2024
+ DIR dir1	: Dimensiune 4096 bytes , inode number 1452239 , Time of last modification Wed May  8 15:09:31 2024
 
- FILE dir1/file1.txt	: Dimensiune 0 bytes ,  inode number 1452251 , Time of last modification Mon Apr  8 15:17:52 2024
+ LINK  dir1/leg_file1	: Dimensiune 9 bytes ,  inode number 1453690 , Time of last modification Wed May  8 15:09:31 2024
+
+ FILE dir1/file1.txt	: Dimensiune 4 bytes ,  inode number 1452251 , Time of last modification Tue May  7 18:45:56 2024
 
  FILE dir1/file2.txt	: Dimensiune 0 bytes ,  inode number 1452253 , Time of last modification Mon Apr  8 15:17:57 2024
 
