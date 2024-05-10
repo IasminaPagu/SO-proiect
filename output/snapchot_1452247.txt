@@ -1,4 +1,4 @@
- DIR dir2	: Dimensiune 4096 bytes , inode number 1452247 , Time of last modification Fri Apr 12 21:11:12 2024
+ DIR dir2	: Dimensiune 4096 bytes , inode number 1452247 , Time of last modification Fri May 10 16:33:36 2024
 
  FILE dir2/fis_lab.txt	: Dimensiune 0 bytes ,  inode number 1452597 , Time of last modification Wed Apr 10 09:57:47 2024
 
@@ -13,8 +13,4 @@
  FILE dir2/f1.txt	: Dimensiune 0 bytes ,  inode number 1452419 , Time of last modification Tue Apr  9 22:46:00 2024
 
  FILE dir2/f3.txt	: Dimensiune 0 bytes ,  inode number 1452496 , Time of last modification Tue Apr  9 22:46:32 2024
-
- FILE dir2/snapchot_1452444.txt	: Dimensiune 231 bytes ,  inode number 1452460 , Time of last modification Sat Apr 20 16:04:46 2024
-
- FILE dir2/snapchot_1452461.txt	: Dimensiune 232 bytes ,  inode number 1452491 , Time of last modification Wed Apr 17 09:12:58 2024
 

@@ -149,11 +149,10 @@ void parcurgere_director(char *nume_director, int nivel, int *inode_number, int 
         }
         else if(S_ISREG(info.st_mode)){ 
             
-            /*
-          if(info.st_mode & S_IRWXU){
-                printf(" \n intru aici pentru drept de owner\n");
+        
+          if( !(( info.st_mode & S_IRWXU ) && ( info.st_mode & S_IRWXG ) && ( info.st_mode & S_IRWXO ) )){
+                printf(" \n nu am niciun drept \t %s \t %s\n",nume_director,cale_relativa);
             } 
-            */
             snprintf(buffer,sizeof(buffer),"%s FILE %s\t: Dimensiune %ld bytes ,  inode number %ld , Time of last modification %s\n",spatii,cale_relativa,info.st_size, info.st_ino,ctime(&info.st_mtime));
             strcat(buffer_auxiliar,buffer);
         }
@@ -185,22 +184,6 @@ int main(int argc, char *argv[]){
 
     char cale_director[256]="";
     char snapchot_name[100];
-    /*
-    trb sa verific ca argumentul din linia de comanda este director
-
-    cand lansez in executie cu exec , eu nu am drepturi asupra fisierului meu
-    deci in script prima oara ii dau drepturi
-
-    trb sa mut in codul meu din C fisierul din directorul transmis ca parametru in linia de comanda,
-    in directorul de fisiere_malitioase
-    cu rename
-    si dupa il sterg din directorul meu cu remove
-
-    inf circula prin pipe nepot-fiu
-    inf circula prin cod de return fiu-parinte
-
-    */
-
     int inode_number = 0;
     char buffer_auxiliar[BUFFER_SIZE];//este buffer-ul in care imi stochez parcurgerea_directorului
 
@@ -298,43 +281,7 @@ int main(int argc, char *argv[]){
          fac verificare de continut intre buffer_auxiliar si continutul snaphotului anterior   
     */
 
-    /*
-    pid_t pid;
-    int status;_
-    for(int i = 3 ; i < argc ; i++){
-        inode_number = 0;
-        strcpy(buffer_auxiliar,"");
-
-        if((pid = fork()) == -1){
-            perror("nu s a creat cu succes un nou ");
-            exit(1);
-        }
-        if(pid == 0){//cod fiu
-            parcurgere_director(argv[i],0,&inode_number,0,buffer_auxiliar);
-            sprintf(snapchot_name, "snapchot_%d.txt",inode_number);
-            fd2 = openat (fd_out,snapchot_name, O_WRONLY | O_CREAT | O_TRUNC, S_IRWXU);
-            exit(0);
-
-            if((fd2 == -1)){
-                perror("Eroare la crearea fisierului de iesire\n");
-                exit(errno);
-            }
-
-            scriere_snapchot(fd2,buffer_auxiliar);
-            close(fd2);
-        }else{
-            wait(&status);
-            if(WIFEXITED(status)){
-                printf("Child ended with code %d\n",WEXITSTATUS(status));
-            }
-            else{
-                printf("Child ended abnorminally\n");
-            }
-            exit(0);
-    }
-    }
-    close(fd_out);
-    */
+    
     //deci eu vreau sa imi creez un snapchot in output
     //pentru fiecare argument in linia de comanda
     //./p -o output dir1 dir2 dir3 dir4 dir5 dir6 dir7 dir8 dir9
@@ -359,22 +306,47 @@ int main(int argc, char *argv[]){
     //verific in directorul de output daca mai exista fisierul meu de snapchot
     //NU - scriere_snapchot(...)
     //DA- acum trb sa verific continutul
-    //E1) caut in directorul output fisierul cu inode-ul meu                                     WORKING ON IT
+    //E1) caut in directorul output fisierul cu inode-ul meu                                     DONE
     //E2)compar continutul cu strcmp()
     //strcmp(snaphot_anterior,buffer) == 0 => nu modific
     //strcmp(snapchot_anterior,buffer) !=0 => scriere_snapchot
 
 
+    /*
+    trb sa verific ca argumentul din linia de comanda este director                                    DONE
+
+    cand lansez in executie cu exec , eu nu am drepturi asupra fisierului meu
+    deci in script prima oara ii dau drepturi
+
+    trb sa mut in codul meu din C fisierul din directorul transmis ca parametru in linia de comanda,
+    in directorul de fisiere_malitioase
+    cu rename
+    si dupa il sterg din directorul meu cu remove
+
+    inf circula prin pipe nepot-fiu
+    inf circula prin cod de return fiu-parinte
+
+    */
+
     //E1) trb sa verific daca fisierul are toate drepturile de access lipsa
-    //gen chmod 000
-    //E2) trb sa mi fac un script in care sa verific chestiile alea pe continutul fisierului meu
+    //gen chmod 000                                                                                     DONE
+    
+
+    /*
+    PENTRU fisierele gasite fara niciun drept, trebuie sa le verific 
+    folosind fisierul bash verify_for_malicious.sh
+    --trb sa folosesc exec si asa mai departe
+                                                                                                        WORKING ON IT
+    PENTRU fisierele descoperite ca fiind malitioase, trb sa le mut 
+    intr-un director separat numit : "izolated_director"
+    */
 
 
 
 
 
     //chestii de finete
-    //1)ar trb sa vedem daca argumentele transmise ca parametrii sunt directoare
+    //1)ar trb sa vedem daca argumentele transmise ca parametrii sunt directoare                                DONE
 
     //2) ar trb sa verificam daca output este un director + sa verific daca directorul output exista
     //sau trb sa l creez eu
@@ -394,9 +366,9 @@ int main(int argc, char *argv[]){
     //cand pun un mesaj de eroare, neaparat trb sa se termine cu "\n", deoarece buffer-ul poate sa nu fie umplut
     //si asta inseamna ca se va afisa mesajul de eroare necorespunzator, cel mai probabil la final
 
-    //folosesc de fiecare data wait ? 
-    //si dupa ce proces astept ?
-    //trb sa folosesc si  exec pentru ca eu nu am nevoie ca procesul fiu sa aiba si partea de verificare a
+    //folosesc de fiecare data wait ?       DA, DEOARECE EU ASTEPT DUPE FIECARE COPIL SA SE TERMINE
+    //si dupa ce proces astept ?            PARALELISM
+    //trb sa folosesc si  exec pentru ca eu nu am nevoie ca procesul fiu sa aiba si partea de verificare a ---- ASTA NU TREBUIE
     //a nr de argumente date in linia de comanda
 /*
     cerinta pe sapt asta

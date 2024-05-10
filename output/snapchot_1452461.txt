@@ -1,6 +1,0 @@
- DIR dir4	: Dimensiune 4096 bytes , inode number 1452461 , Time of last modification Wed Apr 24 15:05:53 2024
-
- FILE dir4/file1.txt	: Dimensiune 16 bytes ,  inode number 1452466 , Time of last modification Fri Apr 12 21:10:41 2024
-
- FILE dir4/file2.txt	: Dimensiune 0 bytes ,  inode number 1452631 , Time of last modification Wed Apr 24 15:05:53 2024
-
