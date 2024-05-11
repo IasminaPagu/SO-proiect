@@ -143,7 +143,8 @@ void parcurgere_director(char *nume_director, int nivel, int *inode_number, int 
         if(S_ISDIR(info.st_mode)){
             parcurgere_director(cale_relativa, nivel + 3, inode_number, contor + 1, buffer_auxiliar);
         }else if(S_ISLNK(info.st_mode)){
-
+            //sincera sa fiu, nu stiu daca trebuie sa verific si pentru link
+            //daca are drepturile lipsa
             snprintf(buffer,sizeof(buffer)," %sLINK  %s\t: Dimensiune %ld bytes ,  inode number %ld , Time of last modification %s\n",spatii,cale_relativa,info.st_size, info.st_ino,ctime(&info.st_mtime));
             strcat(buffer_auxiliar,buffer);
         }
@@ -152,14 +153,66 @@ void parcurgere_director(char *nume_director, int nivel, int *inode_number, int 
         
           if( !(( info.st_mode & S_IRWXU ) && ( info.st_mode & S_IRWXG ) && ( info.st_mode & S_IRWXO ) )){
                 printf(" \n nu am niciun drept \t %s \t %s\n",nume_director,cale_relativa);
-            } 
-            snprintf(buffer,sizeof(buffer),"%s FILE %s\t: Dimensiune %ld bytes ,  inode number %ld , Time of last modification %s\n",spatii,cale_relativa,info.st_size, info.st_ino,ctime(&info.st_mtime));
-            strcat(buffer_auxiliar,buffer);
+                pid_t pid;
+                int status;
+                int pfd[2];
+                FILE *stream;
+                char mesaj_nepot[100];
+                //fiiul imi creeaza un pipe
+                if(pipe(pfd)<0){
+                    perror("Eroare la crearea pipe-ului");
+                    exit(errno);
+                }
+                if((pid=fork())<0)
+                {
+                    printf("Eroare la fork nepot\n");
+                    //exit(1);
+                    exit(errno);
+                }
+                if(pid==0) /* procesul fiu--adica nepot */
+                {
+                   printf("am intrat aici\n");
+
+                   close(pfd[0]);//inchid capatul de citire, deoarece fiul(nepotul) imi scrie
+                    //SAFE - daca fisierul nu e malitios
+                   //nume_fisier - daca fisierul e malitios
+
+                   dup2(pfd[1],1);//imi redirectez iesirea standard spre pipe
+                   //adica in loc sa mi se afiseze SAFE sau nume_fisierul in terminal
+                   //mi se va transmite in capatul de scriere, de unde ulterior va citi procesul parinte(fiiul)
+
+
+                   execl("/bin/bash","sh","verify_for_malicious.sh",cale_relativa,NULL);
+                   perror("Eroare la exec\n"); 
+                   exit(errno);
+                    /* Daca execlp s-a intors, inseamna ca programul
+                    nu a putut fi lansat in executie */
+                }
+                else /* procesul parinte--adica fiu */
+                {
+                    close(pfd[1]);//inchid capatul de scriere, pentru ca eu doar citesc
+                    stream = fdopen(pfd[0],"r");
+                    fscanf(stream,"%s",mesaj_nepot);
+
+                    if(strcmp(mesaj_nepot,"SAFE") == 0){//daca fisierul e declarat ca fiind safe il scriu in snapchot
+                    //daca nu, trebuie sa l mut in izolated_dir
+                        snprintf(buffer,sizeof(buffer),"%s FILE %s\t: Dimensiune %ld bytes ,  inode number %ld , Time of last modification %s\n",spatii,cale_relativa,info.st_size, info.st_ino,ctime(&info.st_mtime));
+                        strcat(buffer_auxiliar,buffer);
+                    }
+                    else{
+                        printf("%s FISIER investat \n",mesaj_nepot);
+                    }
+                    close(pfd[0]);
+                    /*
+                    //aici trb sa mi fac o verificare
+                    */
+                    waitpid(pid,&status,0);
+                    //exit(0);
+                }
+            }
         }
     }
     closedir(dir);
-    
-
 }
 int verificare_director_argument_in_linia_de_comanda(char *nume_argument){
     //returneaza 1 daca argumentul dat ca si argument functiei este director
@@ -262,17 +315,6 @@ int main(int argc, char *argv[]){
         return 0;
 
 }
-            /*
-     printf("\nChild ended with code %d\n", WEXITSTATUS(status));
-  else
-     printf("\nChild ended abnormally\n");
-            if(WIFEXITED(status)){
-                printf("\nChild %d ended with code %d cu numele %s\n\n", getpid(), WEXITSTATUS(status),snapchot_name);
-            }else{
-                printf("\nChild %d ended abnormally\n", getpid());
-            }
-            */
-
     /*  IDEEA de lucru pt astazi este urmatoarea : 
     E1) parcurg directorul de output snapchot cu snapchot                                                       DONE 
     daca NU gasesc un snapchot cu numele identic 
@@ -338,7 +380,9 @@ int main(int argc, char *argv[]){
     --trb sa folosesc exec si asa mai departe
                                                                                                         WORKING ON IT
     PENTRU fisierele descoperite ca fiind malitioase, trb sa le mut 
-    intr-un director separat numit : "izolated_director"
+    intr-un director separat numit : "izolated_director" --- chestia asta face fiul
+
+    procesul parinte se ocupa doar cu codurile de retur, adica in fiu pun exec(nr_fisiere_malitioase)
     */
 
 
