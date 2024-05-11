@@ -1,6 +1,4 @@
- DIR dir2	: Dimensiune 4096 bytes , inode number 1452247 , Time of last modification Fri May 10 16:33:36 2024
-
- FILE dir2/fis_lab.txt	: Dimensiune 0 bytes ,  inode number 1452597 , Time of last modification Wed Apr 10 09:57:47 2024
+ DIR dir2	: Dimensiune 4096 bytes , inode number 1452247 , Time of last modification Sat May 11 22:37:36 2024
 
        DIR dir2/dir3	: Dimensiune 4096 bytes , inode number 1452493 , Time of last modification Tue Apr  9 22:46:22 2024
 
@@ -10,7 +8,11 @@
 
  FILE dir2/f2.txt	: Dimensiune 0 bytes ,  inode number 1452490 , Time of last modification Tue Apr  9 22:46:04 2024
 
+ FILE dir2/fara_drepturi_nu_e_malitios.txt	: Dimensiune 6706 bytes ,  inode number 1451100 , Time of last modification Sat May 11 16:52:09 2024
+
  FILE dir2/f1.txt	: Dimensiune 0 bytes ,  inode number 1452419 , Time of last modification Tue Apr  9 22:46:00 2024
+
+ FILE dir2/fisier_proba.txt	: Dimensiune 0 bytes ,  inode number 1446849 , Time of last modification Sat May 11 22:37:36 2024
 
  FILE dir2/f3.txt	: Dimensiune 0 bytes ,  inode number 1452496 , Time of last modification Tue Apr  9 22:46:32 2024
 

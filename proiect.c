@@ -1,31 +1,3 @@
-/*
-Proiectul vizează dezvoltarea unui sistem de monitorizare a modificărilor în directoare, 
-oferind utilizatorului capacitatea de a crea instantanee (snapshots) 
-pentru a urmări evoluția acestora în timp. Utilizatorii vor specifica directorul țintă prin linia de comandă,
-iar programul va detecta și urmări schimbările survenite, inclusiv în subdirectoarele sale. 
-Schimbările monitorizate includ redenumiri, ștergeri, modificări de dimensiune, variații în numărul de legături 
-și ajustări de permisiuni. La fiecare execuție, programul va actualiza snapshot-ul directorului, 
-salvând metadate relevante pentru fiecare fișier sau subdirector, cum ar fi 
-
-numele, identificatorul inode, dimensiunea și data ultimei modificări. 
-
-În cazul identificării unui snapshot anterior, programul va compara
-datele actuale cu cele vechi, actualizând sau înlocuind snapshot-ul după necesitate. 
-Abordarea exactă de salvare și gestionare a snapshot-urilor este lăsată la discreția dezvoltatorilor, 
-fie că optează pentru stocarea unui snapshot în fiecare director monitorizat, 
-fie pentru crearea unei ierarhii separate. Se încurajează furnizarea de exemple de input și output pentru a ghida dezvoltatorii,
-menținând totodată un grad de flexibilitate în implementare pentru a evita soluții uniforme. 
-Proiectul încurajează inovația și auto-gestionarea resurselor, oferind studenților libertatea de a 
-explora diverse metode de realizare a sarcinilor specificate.
-   */
-
-
-/*pt fiecare argument primit in linia de comanda se va crea un proces separat 
-care sa se ocupe de argumentul respectiv
-
-numele snapchot-ul va contine i_node number
-
-*/
 #include<stdio.h>
 #include<stdlib.h>
 #include<string.h>
@@ -39,9 +11,7 @@ numele snapchot-ul va contine i_node number
 #include <fcntl.h>
 #include <time.h>
 #include<sys/wait.h>
-
-//adaug data ultimei modificari step1
-
+#include <libgen.h>
 
 #define BUFFER_SIZE 4096
 void scriere_snapchot(char *cale_director, char buff2[]){
@@ -57,7 +27,6 @@ void scriere_snapchot(char *cale_director, char buff2[]){
    }
    close(fd);
 }
-
 int verificare_exista_snapchot_anterior(char *nume_dir_out, char *nume_snapchot){
     DIR *dir = opendir(nume_dir_out);
     if(dir == NULL){
@@ -96,9 +65,9 @@ int comparare_snapchot_anterior(const char *cale_relativa_snap_anterior, const c
     return 1;//inseamna ca s a facut o modificare si vreau sa se inlocuiasca snapchotul anterior
    }
    close(fd);
-   //are vreun efect chestia asta  ???
+   //are vreun efect chestia asta  ??-eu cred ca nu, deoarece am dat return inainte
 }
-void parcurgere_director(char *nume_director, int nivel, int *inode_number, int contor , char buffer_auxiliar[]){
+void parcurgere_director(char *nume_director, int nivel, int *inode_number, int contor , char buffer_auxiliar[],int *nr_fisiere_malitioase, char *nume_director_fisiere_investate){
     DIR *dir = opendir(nume_director);
     if(dir == NULL){
         perror("Eroare deschidere director\n");
@@ -141,7 +110,7 @@ void parcurgere_director(char *nume_director, int nivel, int *inode_number, int 
         exit(errno);
         }
         if(S_ISDIR(info.st_mode)){
-            parcurgere_director(cale_relativa, nivel + 3, inode_number, contor + 1, buffer_auxiliar);
+            parcurgere_director(cale_relativa, nivel + 3, inode_number, contor + 1, buffer_auxiliar,nr_fisiere_malitioase, nume_director_fisiere_investate);
         }else if(S_ISLNK(info.st_mode)){
             //sincera sa fiu, nu stiu daca trebuie sa verific si pentru link
             //daca are drepturile lipsa
@@ -151,37 +120,27 @@ void parcurgere_director(char *nume_director, int nivel, int *inode_number, int 
         else if(S_ISREG(info.st_mode)){ 
             
         
-          if( !(( info.st_mode & S_IRWXU ) && ( info.st_mode & S_IRWXG ) && ( info.st_mode & S_IRWXO ) )){
-                printf(" \n nu am niciun drept \t %s \t %s\n",nume_director,cale_relativa);
+          if( (!( info.st_mode & S_IRWXU )) && (!( info.st_mode & S_IRWXG )) && (!( info.st_mode & S_IRWXO )) ){//daca fisierul meu n-are drepturi
                 pid_t pid;
                 int status;
                 int pfd[2];
                 FILE *stream;
                 char mesaj_nepot[100];
-                //fiiul imi creeaza un pipe
+                //fiul imi creeaza un pipe
                 if(pipe(pfd)<0){
                     perror("Eroare la crearea pipe-ului");
                     exit(errno);
                 }
                 if((pid=fork())<0)
                 {
-                    printf("Eroare la fork nepot\n");
-                    //exit(1);
+                    perror("Eroare la fork nepot\n");
                     exit(errno);
                 }
                 if(pid==0) /* procesul fiu--adica nepot */
                 {
-                   printf("am intrat aici\n");
-
                    close(pfd[0]);//inchid capatul de citire, deoarece fiul(nepotul) imi scrie
-                    //SAFE - daca fisierul nu e malitios
-                   //nume_fisier - daca fisierul e malitios
-
                    dup2(pfd[1],1);//imi redirectez iesirea standard spre pipe
-                   //adica in loc sa mi se afiseze SAFE sau nume_fisierul in terminal
-                   //mi se va transmite in capatul de scriere, de unde ulterior va citi procesul parinte(fiiul)
-
-
+                   
                    execl("/bin/bash","sh","verify_for_malicious.sh",cale_relativa,NULL);
                    perror("Eroare la exec\n"); 
                    exit(errno);
@@ -200,16 +159,38 @@ void parcurgere_director(char *nume_director, int nivel, int *inode_number, int 
                         strcat(buffer_auxiliar,buffer);
                     }
                     else{
-                        printf("%s FISIER investat \n",mesaj_nepot);
+                       char path[100];
+                       sprintf(path, "%s/%s", nume_director_fisiere_investate,basename(cale_relativa)); //am folosit basename ca sa am doar numele fisierului,
+                       //daca foloseam nume_fisier aveam de ecd xemplu /dir/b.c
+                       int val_rename = rename(cale_relativa, path);
+
+                       if(val_rename == -1){
+                        perror("eroare rename\n");
+                        exit(errno);
+                       }
+                       *nr_fisiere_malitioase = *nr_fisiere_malitioase + 1;
+
                     }
+
                     close(pfd[0]);
-                    /*
-                    //aici trb sa mi fac o verificare
-                    */
-                    waitpid(pid,&status,0);
-                    //exit(0);
+                    pid_t wpid = waitpid(pid,&status,0);
+                    if (wpid == -1) {
+                        perror("eroare waitpid fiu\n");
+                        exit(errno);
+                    }
                 }
             }
+            else{
+                snprintf(buffer,sizeof(buffer),"%s FILE %s\t: Dimensiune %ld bytes ,  inode number %ld , Time of last modification %s\n",spatii,cale_relativa,info.st_size, info.st_ino,ctime(&info.st_mtime));
+                strcat(buffer_auxiliar,buffer);
+            }
+            /*
+            Ideea este urmatoarea, daca fisierul meu NU ARE drepturi , il verific cu scriptul
+            daca scriptul zice SAFE - imi scriu in snapchot
+                               NUME_FISIER - nu mai are rost sa il scriu si il mut din directorul curent in isolated_space_dir
+
+                               daca fisierul meu ARE drepturi -- imi scriiu direct in snapchot
+            */
         }
     }
     closedir(dir);
@@ -243,12 +224,11 @@ int main(int argc, char *argv[]){
     pid_t pid ,wpid;
     int status;
 
-    if(argc > 13){
+    if(argc > 15){
         printf("Nu ati transmis numarul potrivit de argumente in linia de comanda\n");
         exit(EXIT_FAILURE);
     }
-    
-    for(int i = 3 ; i < argc ; i++){
+    for(int i = 5 ; i < argc ; i++){
 
         inode_number = 0;
         strcpy(buffer_auxiliar,"");
@@ -260,7 +240,8 @@ int main(int argc, char *argv[]){
                 exit(1);
             }
             if(pid == 0){//cod fiu
-                parcurgere_director(argv[i],0, &inode_number, 0,buffer_auxiliar);
+                int nr_fisiere_malitioase=0;
+                parcurgere_director(argv[i],0, &inode_number, 0,buffer_auxiliar,&nr_fisiere_malitioase,argv[4]);
 
                 sprintf(snapchot_name, "snapchot_%d.txt",inode_number);
                 strcpy(cale_director, argv[2]);
@@ -270,20 +251,19 @@ int main(int argc, char *argv[]){
                 if(verificare_exista_snapchot_anterior(argv[2],snapchot_name) == 0){//inseamna ca noul snapchot nu exista in directorul de output
                     //si atunci il creez
                     scriere_snapchot(cale_director,buffer_auxiliar);
-                    printf("nu exista inainte de acest apel\n");
+                    printf("Snapchotul pentru directorul %s nu exista inainte de acest apel\n",argv[i]);
                 }else{
                     //compar ce exista deja in snapchot_name cu buffer_auxiliar pe care l am obtinut prin apelarea functiei parcurgere_director(...)
                     if( (comparare_snapchot_anterior(cale_director,buffer_auxiliar) == 0) ){//inseamna ca nu s-a facut nicio modificare in snapchot
-                        printf("nu s a produs nicio modificare fata de snapchotul anterior\n");
+                        printf("nu s a produs nicio modificare fata de snapchotul anterior--pentru directorul %s\n",argv[i]);
                         //continue;
                     }
                     else{
                         scriere_snapchot(cale_director, buffer_auxiliar);
-                        printf("a existat o modificare\n");
+                        printf("a existat o modificare--pentru directorul %s\n",argv[i]);
                     }
-                    printf("exista deja \n");
                 }
-                exit(0);
+                exit(nr_fisiere_malitioase);
             }
         }
         else{
@@ -293,18 +273,21 @@ int main(int argc, char *argv[]){
     }
 
     //proces parinte
-    for(int i = 3 ; i < argc ; i++){
+    int nr_copil=0;
+    for(int i = 5 ; i < argc ; i++){
+        nr_copil++;
         if(verificare_director_argument_in_linia_de_comanda(argv[i]) == 1){
             //doar daca argumentul este un director se creeaza un proces pentru el
             //daca nu puneam aceasta conditie aparea mesajul : "waitpid: No child processes "
             //dar facea totul corect in rest
             wpid = wait(&status);
             if (wpid == -1) {
-                    perror("waitpid");
-                    exit(EXIT_FAILURE);
+                    perror("eroare waitpid parinte\n");
+                    exit(errno);
             }
             if(WIFEXITED(status)){
-            printf("Procesul cu PID %d s-a incheiat cu codul %d\n",wpid,WEXITSTATUS(status));//WEXITSTATUS ne da codul de retur, gen exit(0)
+            printf("Procesul Copil %d s-a incheiat cu PID-ul  %d  si cu %d fisiere potential periculoase\n",nr_copil,wpid,WEXITSTATUS(status));//WEXITSTATUS ne da codul de retur, gen exit(0)
+            printf("\n");
             }
             else{
                 printf("Child %d ended abnormally\n", wpid);
@@ -378,11 +361,18 @@ int main(int argc, char *argv[]){
     PENTRU fisierele gasite fara niciun drept, trebuie sa le verific 
     folosind fisierul bash verify_for_malicious.sh
     --trb sa folosesc exec si asa mai departe
-                                                                                                        WORKING ON IT
+                                                                                                        DONE
     PENTRU fisierele descoperite ca fiind malitioase, trb sa le mut 
     intr-un director separat numit : "izolated_director" --- chestia asta face fiul
 
-    procesul parinte se ocupa doar cu codurile de retur, adica in fiu pun exec(nr_fisiere_malitioase)
+                        int rename(const char *oldpath, const char *newpath);
+                        //On success, zero is returned.  On error, -1 is returned, and errno is set appropriately.
+                        rename(cale_relativa,cale_isolated_space_dir);
+                        printf("%s FISIER investat \n",mesaj_nepot);
+
+    */
+   /*
+    procesul parinte se ocupa doar cu codurile de retur, adica in fiu pun exec(nr_fisiere_malitioase)               DONE
     */
 
 
@@ -398,9 +388,6 @@ int main(int argc, char *argv[]){
     //sa ma gandesc sa fisierul de output se poate sa nu fie in working directory-SO-proiect
     //ci se poate sa fie in /bin/home si atunci trb sa fac
 
-    //strcpy()
-    //strcpy
-
 
     //16.04.2024
     //trb sa mi adaug cate un proces pentru fiecare arg in linie de comanda
@@ -414,7 +401,3 @@ int main(int argc, char *argv[]){
     //si dupa ce proces astept ?            PARALELISM
     //trb sa folosesc si  exec pentru ca eu nu am nevoie ca procesul fiu sa aiba si partea de verificare a ---- ASTA NU TREBUIE
     //a nr de argumente date in linia de comanda
-/*
-    cerinta pe sapt asta
-    
-*/
